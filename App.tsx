@@ -1,12 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { SwipeDeck } from './components/SwipeDeck';
 import { MatchesList } from './components/MatchesList';
 import { ChatScreen } from './components/ChatScreen';
 import { Onboarding } from './components/Onboarding';
 import { GiverDashboard } from './components/GiverDashboard';
 import { Pet, Match, Species, UserPreferences } from './types';
+import { getPetsFromDB, db } from './services/firebase';
 
-// Mock Data
+// Mock Data (Fallback si no hay Firebase)
 const MOCK_PETS: Pet[] = [
   {
     id: '1',
@@ -40,28 +41,6 @@ const MOCK_PETS: Pet[] = [
     personality: 'Perezoso, gracioso, le encanta la comida, relajado',
     imageUrl: 'https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?auto=format&fit=crop&w=600&q=80',
     distance: 2
-  },
-  {
-    id: '4',
-    name: 'Mishi',
-    age: 3,
-    species: Species.CAT,
-    breed: 'Tabby',
-    bio: 'Cazadora experta de punteros láser. Busco hogar tranquilo.',
-    personality: 'Juguetona, rápida, observadora, curiosa',
-    imageUrl: 'https://images.unsplash.com/photo-1574158622682-e40e69881006?auto=format&fit=crop&w=600&q=80',
-    distance: 8
-  },
-  {
-    id: '5',
-    name: 'Coco',
-    age: 5,
-    species: Species.DOG,
-    breed: 'Labrador',
-    bio: 'Soy muy bueno con los niños. ¿Vamos al parque?',
-    personality: 'Protector, amable, paciente, siempre tiene hambre',
-    imageUrl: 'https://images.unsplash.com/photo-1591769225440-811ad7d6ecae?auto=format&fit=crop&w=600&q=80',
-    distance: 12
   }
 ];
 
@@ -88,9 +67,29 @@ export default function App() {
   const [view, setView] = useState<'deck' | 'matches' | 'chat'>('deck');
   const [matches, setMatches] = useState<Match[]>([]);
   const [currentChatMatch, setCurrentChatMatch] = useState<Match | null>(null);
-  const [pets, setPets] = useState<Pet[]>(MOCK_PETS);
+  const [pets, setPets] = useState<Pet[]>([]);
+  const [isLoadingPets, setIsLoadingPets] = useState(false);
   const [onboardingComplete, setOnboardingComplete] = useState(false);
   const [userPrefs, setUserPrefs] = useState<UserPreferences | null>(null);
+
+  // Cargar mascotas reales al iniciar (o al completar onboarding)
+  const loadPets = async () => {
+    setIsLoadingPets(true);
+    try {
+      const realPets = await getPetsFromDB();
+      if (realPets && realPets.length > 0) {
+        setPets(realPets as Pet[]);
+      } else {
+        // Fallback a Mock si no hay DB o está vacía
+        setPets(MOCK_PETS);
+      }
+    } catch (e) {
+      console.error("Error cargando mascotas:", e);
+      setPets(MOCK_PETS);
+    } finally {
+      setIsLoadingPets(false);
+    }
+  };
 
   const handleMatch = (pet: Pet, isSuperLike: boolean = false) => {
     const newMatch: Match = {
@@ -118,16 +117,7 @@ export default function App() {
 
   const handleOnboardingComplete = (prefs: UserPreferences) => {
     setUserPrefs(prefs);
-    
-    // Filter pets based on preferences if Adopter
-    if (prefs.role === 'ADOPTER') {
-      if (prefs.preferredSpecies !== 'BOTH') {
-        setPets(MOCK_PETS.filter(p => p.species === prefs.preferredSpecies));
-      } else {
-        setPets(MOCK_PETS);
-      }
-    }
-    
+    loadPets(); // Trigger load
     setOnboardingComplete(true);
   };
 
@@ -173,7 +163,16 @@ export default function App() {
                  <i className="fas fa-sliders-h"></i>
                </button>
             </div>
-            <SwipeDeck pets={pets} onMatch={handleMatch} />
+            
+            {/* Loading or Deck */}
+            {isLoadingPets ? (
+              <div className="flex h-full items-center justify-center">
+                <i className="fas fa-circle-notch fa-spin text-orange-500 text-3xl"></i>
+              </div>
+            ) : (
+              <SwipeDeck pets={pets} onMatch={handleMatch} />
+            )}
+            
           </div>
         )}
 
