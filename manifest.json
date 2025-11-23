@@ -1,0 +1,21 @@
+{
+  "short_name": "Nueva Vida",
+  "name": "Nueva Vida - Adopción Mendoza",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/1076/1076928.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    },
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/1076/1076928.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#f97316",
+  "background_color": "#ffffff",
+  "orientation": "portrait"
+}
