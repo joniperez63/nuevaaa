@@ -3,7 +3,7 @@ import { signInAnonymously, onAuthStateChanged, signInWithCustomToken } from 'fi
 import type { User } from 'firebase/auth';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { AnimatePresence } from 'framer-motion';
-import { Dog, Info } from 'lucide-react';
+import { Dog, Info, AlertTriangle } from 'lucide-react';
 
 import { auth, db, appId } from './firebaseConfig.ts';
 import { UserProfile, Role, ChatSession } from './types.ts';
@@ -26,35 +26,66 @@ export default function App() {
   const [activeChat, setActiveChat] = useState<ChatSession | null>(null);
   const [securityModalOpen, setSecurityModalOpen] = useState(false);
 
+  // --- SAFEGUARD: CHECK CONFIG ---
+  if (!auth || !db) {
+    return (
+        <div className="min-h-screen bg-orange-50 flex flex-col items-center justify-center p-6 text-center">
+            <AlertTriangle className="w-16 h-16 text-red-500 mb-4" />
+            <h1 className="text-2xl font-bold text-gray-800 mb-2">Falta Configuración</h1>
+            <p className="text-gray-600 max-w-md">
+                La aplicación no detectó las credenciales de Firebase.
+            </p>
+            <div className="mt-6 bg-white p-4 rounded-lg shadow-sm text-left text-sm text-gray-700 w-full max-w-md overflow-hidden">
+                <p className="font-bold mb-2">Para arreglar esto en Vercel:</p>
+                <ol className="list-decimal pl-4 space-y-2">
+                    <li>Ve a tu proyecto en Vercel > Settings > Environment Variables.</li>
+                    <li>Agrega una nueva variable llamada: <br/><code className="bg-gray-100 px-1">VITE_FIREBASE_CONFIG</code></li>
+                    <li>Pega el JSON de configuración de Firebase como valor.</li>
+                    <li>Redespliega el proyecto.</li>
+                </ol>
+            </div>
+        </div>
+    );
+  }
+
   // Auth Initialization
   useEffect(() => {
     const initAuth = async () => {
       try {
         if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-          await signInWithCustomToken(auth, __initial_auth_token);
+          await signInWithCustomToken(auth!, __initial_auth_token);
         } else {
-          await signInAnonymously(auth);
+          await signInAnonymously(auth!);
         }
       } catch (error) {
         console.error("Auth error:", error);
+        // If auth fails (e.g. invalid key), stop loading to show UI, maybe show error
+        // For now, we let it hang on loading or handle it inside role selection if user is null
       }
     };
     initAuth();
 
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+    const unsubscribe = onAuthStateChanged(auth!, async (currentUser) => {
       if (currentUser) {
         setUser(currentUser);
         // Fetch Profile
-        const docRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'profile', 'data');
-        const docSnap = await getDoc(docRef);
-        
-        if (docSnap.exists()) {
-          const data = docSnap.data() as UserProfile;
-          setUserData(data);
-          setView(data.role === 'adopter' ? 'adopter-main' : 'giver-main');
-        } else {
-          setView('role-selection');
+        try {
+            const docRef = doc(db!, 'artifacts', appId, 'users', currentUser.uid, 'profile', 'data');
+            const docSnap = await getDoc(docRef);
+            
+            if (docSnap.exists()) {
+              const data = docSnap.data() as UserProfile;
+              setUserData(data);
+              setView(data.role === 'adopter' ? 'adopter-main' : 'giver-main');
+            } else {
+              setView('role-selection');
+            }
+        } catch (e) {
+            console.error("Error fetching profile:", e);
+            setView('role-selection');
         }
+      } else {
+        // No user yet, might be loading or failed anonymous auth
       }
       setLoading(false);
     });
@@ -62,7 +93,6 @@ export default function App() {
   }, []);
 
   const handleRoleSelect = (role: Role) => {
-    // Temporary user data with role before saving
     setUserData({ ...userData, role } as UserProfile);
     setView('profile-form');
   };
@@ -78,7 +108,7 @@ export default function App() {
         createdAt: serverTimestamp()
       } as UserProfile;
       
-      await setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'profile', 'data'), profileData);
+      await setDoc(doc(db!, 'artifacts', appId, 'users', user.uid, 'profile', 'data'), profileData);
       
       setUserData(profileData);
       setView(userData.role === 'adopter' ? 'adopter-main' : 'giver-main');
@@ -96,7 +126,7 @@ export default function App() {
       
       {/* Global Header (Hidden in chat) */}
       {view !== 'chat' && (
-        <header className="bg-white shadow-sm p-4 flex justify-between items-center sticky top-0 z-20">
+        <header className="bg-white shadow-sm p-4 flex justify-between items-center sticky top-0 z-20 safe-top">
           <div 
             className="flex items-center gap-2 cursor-pointer" 
             onClick={() => userData && setView(userData.role === 'adopter' ? 'adopter-main' : 'giver-main')}
@@ -136,7 +166,7 @@ export default function App() {
               userData={userData} 
               onOpenChat={(session) => {
                 setActiveChat(session);
-                setSecurityModalOpen(true); // Mandatory security check
+                setSecurityModalOpen(true); 
                 setView('chat');
               }}
             />
@@ -158,12 +188,11 @@ export default function App() {
       </main>
 
       {/* FIXED ADVERTISEMENT BANNER */}
-      {/* This persists across all views except full-screen modals if needed, but here we keep it always */}
       <a 
         href="https://www.instagram.com/alba.jazmin.tienda?igsh=MTc1NTBldzM1dHN5bA==" 
         target="_blank" 
         rel="noopener noreferrer"
-        className="fixed bottom-0 left-0 w-full bg-gradient-to-r from-purple-600 to-pink-500 text-white p-3 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-50 flex flex-col items-center justify-center cursor-pointer hover:brightness-110 transition-all no-underline"
+        className="fixed bottom-0 left-0 w-full bg-gradient-to-r from-purple-600 to-pink-500 text-white p-3 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-50 flex flex-col items-center justify-center cursor-pointer hover:brightness-110 transition-all no-underline safe-bottom"
       >
         <p className="text-sm font-bold tracking-wide">Personalizá tu mundo con sublimaciones y remeras DTF.</p>
         <p className="text-xs opacity-90 font-medium mt-0.5">Alba Jazmín Tienda 🛍️</p>
