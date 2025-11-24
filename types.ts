@@ -1,44 +1,65 @@
-export enum Species {
-  DOG = 'Perro',
-  CAT = 'Gato'
+import { Timestamp } from 'firebase/firestore';
+
+declare global {
+  var __firebase_config: string | undefined;
+  var __app_id: string | undefined;
+  var __initial_auth_token: string | undefined;
 }
 
-export type UserRole = 'ADOPTER' | 'GIVER';
+export type Role = 'adopter' | 'giver';
+
+export interface LocationData {
+  lat: number;
+  lng: number;
+}
+
+export interface UserProfile {
+  uid: string;
+  name: string;
+  role: Role;
+  location?: LocationData;
+  phone?: string;
+  housingType?: string;
+  hasKids?: boolean;
+  hasPets?: boolean;
+  createdAt: any;
+}
 
 export interface Pet {
   id: string;
   name: string;
-  age: number;
-  species: Species;
-  breed: string;
-  bio: string;
-  imageUrl: string;
-  personality: string; // Used for Gemini prompt
-  distance: number;
+  photoUrl: string;
+  ownerId: string;
+  location: LocationData;
+  castrated: boolean;
+  vaccinated: boolean;
+  distance?: string; // Calculated on client
+  createdAt: any;
 }
 
-export interface Message {
+export interface Interaction {
+  id?: string;
+  adopterId: string;
+  petId: string;
+  ownerId: string;
+  petName: string;
+  petPhoto: string;
+  adopterName: string;
+  status: 'pending' | 'accepted' | 'rejected';
+  createdAt: any;
+}
+
+export interface ChatMessage {
   id: string;
-  sender: 'user' | 'pet';
   text: string;
-  timestamp: Date;
+  senderId: string;
+  createdAt: Timestamp;
 }
 
-export interface Match {
-  pet: Pet;
-  messages: Message[];
-  lastMessageAt: Date;
-  isSuperLike?: boolean; // New property for Super Match
-}
-
-export interface UserPreferences {
-  name: string;
-  role: UserRole;
-  preferredSpecies: Species | 'BOTH';
-  maxDistance: number;
-  // New adoption details
-  housingType?: 'HOUSE' | 'APARTMENT';
-  ownership?: 'OWNED' | 'RENTED';
-  hasYard?: boolean;
-  hasKids?: boolean;
+export interface ChatSession {
+  id: string;
+  otherUser: {
+    uid: string;
+    name: string;
+  };
 }

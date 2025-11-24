@@ -1,38 +1,36 @@
 <!DOCTYPE html>
 <html lang="es">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-    <title>Nueva Vida</title>
-    <link rel="manifest" href="/manifest.json" />
-    <meta name="theme-color" content="#f97316" />
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Nueva Vida Mendoza</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      /* Prevent pull-to-refresh on mobile */
+      body {
+        overscroll-behavior-y: none;
+        user-select: none;
+        -webkit-tap-highlight-color: transparent;
+      }
+    </style>
   <script type="importmap">
 {
   "imports": {
-    "firebase/": "https://aistudiocdn.com/firebase@^12.6.0/",
+    "react-dom/client": "https://aistudiocdn.com/react-dom@^19.2.0/client",
     "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
     "react/": "https://aistudiocdn.com/react@^19.2.0/",
     "react": "https://aistudiocdn.com/react@^19.2.0",
-    "vite": "https://aistudiocdn.com/vite@^7.2.4",
-    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.30.0",
-    "@vitejs/plugin-react": "https://aistudiocdn.com/@vitejs/plugin-react@^5.1.1"
+    "firebase/": "https://aistudiocdn.com/firebase@^12.6.0/",
+    "framer-motion": "https://aistudiocdn.com/framer-motion@^12.23.24",
+    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.554.0"
   }
 }
 </script>
+<link rel="stylesheet" href="/index.css">
 </head>
-  <body>
+  <body class="bg-orange-50">
     <div id="root"></div>
-    <script type="module" src="/index.tsx"></script>
-    <script>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/service-worker.js')
-            .catch(err => {
-              console.log('SW registration failed: ', err);
-            });
-        });
-      }
-    </script>
-  </body>
+    <script type="module" src="./index.tsx"></script>
+  <script type="module" src="/index.tsx"></script>
+</body>
 </html>
