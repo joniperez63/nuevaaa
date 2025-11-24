@@ -1,0 +1,8 @@
+{
+  "name": "Nueva Vida Mendoza",
+  "description": "Una aplicación para conectar adoptantes de mascotas con personas que dan en adopción en Mendoza. Estilo swipe para facilitar la conexión.",
+  "requestFramePermissions": [
+    "camera",
+    "geolocation"
+  ]
+}
